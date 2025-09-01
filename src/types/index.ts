@@ -18,6 +18,8 @@ export type Template = {
   thumbnail?: string;
   category: "social" | "marketing" | "business" | "personal";
   tags: string[];
+  createdAt?: Date;
+  updatedAt?: Date;
 };
 
 export type TemplateDSL = {

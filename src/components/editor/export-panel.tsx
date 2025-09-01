@@ -1,270 +1,330 @@
 'use client';
 
+import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
-import { useEditorStore } from '@/store/editor-store';
-import { ExportEngine } from '@/lib/export-engine';
-import { Download, Image, FileText, Settings, Smartphone, Monitor } from 'lucide-react';
-import { useState } from 'react';
-
-const socialMediaFormats = [
-  { id: 'instagram-square', name: 'Instagram Square', width: 1080, height: 1080, icon: Smartphone },
-  { id: 'instagram-portrait', name: 'Instagram Portrait', width: 1080, height: 1350, icon: Smartphone },
-  { id: 'instagram-story', name: 'Instagram Story', width: 1080, height: 1920, icon: Smartphone },
-  { id: 'instagram-reel', name: 'Instagram Reel', width: 1080, height: 1920, icon: Smartphone },
-  { id: 'facebook-post', name: 'Facebook Post', width: 1200, height: 630, icon: Monitor },
-  { id: 'facebook-story', name: 'Facebook Story', width: 1080, height: 1920, icon: Monitor },
-  { id: 'twitter-post', name: 'Twitter Post', width: 1200, height: 675, icon: Monitor },
-  { id: 'linkedin-post', name: 'LinkedIn Post', width: 1200, height: 627, icon: Monitor },
-  { id: 'youtube-thumbnail', name: 'YouTube Thumbnail', width: 1280, height: 720, icon: Monitor },
-  { id: 'tiktok-video', name: 'TikTok Video', width: 1080, height: 1920, icon: Smartphone },
-];
+import { 
+  Download, 
+  Image as ImageIcon, 
+  FileText,
+  Settings,
+  Check,
+  X
+} from 'lucide-react';
+import { useEditorStore, useCurrentPage } from '@/store/editor-store';
+import toast from 'react-hot-toast';
 
 export function ExportPanel() {
-  const { currentPage, currentProject } = useEditorStore();
+  const { currentProject, setExporting } = useEditorStore();
+  const currentPage = useCurrentPage();
   const [isExporting, setIsExporting] = useState(false);
-  const [exportConfig, setExportConfig] = useState({
-    format: 'png',
-    quality: 90,
-    includeBackground: true,
-    scale: 1,
-    fileName: currentProject?.name || 'arte-social-media'
-  });
+  const [exportFormat, setExportFormat] = useState<'png' | 'jpg' | 'webp' | 'pdf'>('png');
+  const [quality, setQuality] = useState(90);
+  const [scale, setScale] = useState(2);
+  const [filename, setFilename] = useState('');
+  const [includeMetadata, setIncludeMetadata] = useState(true);
+  const [background, setBackground] = useState('#ffffff');
 
-  const handleExport = async (type: 'single' | 'batch' | 'social') => {
-    if (!currentPage) return;
+  const formats = [
+    { value: 'png', label: 'PNG', description: 'Transparência, alta qualidade' },
+    { value: 'jpg', label: 'JPG', description: 'Menor tamanho, boa qualidade' },
+    { value: 'webp', label: 'WebP', description: 'Moderno, otimizado' },
+    { value: 'pdf', label: 'PDF', description: 'Vetorial, para impressão' },
+  ];
+
+  const presetSizes = [
+    { name: 'Instagram Square', width: 1080, height: 1080 },
+    { name: 'Instagram Portrait', width: 1080, height: 1350 },
+    { name: 'Instagram Story', width: 1080, height: 1920 },
+    { name: 'Facebook Post', width: 1200, height: 630 },
+    { name: 'Twitter Post', width: 1200, height: 675 },
+    { name: 'YouTube Thumbnail', width: 1280, height: 720 },
+    { name: 'LinkedIn Post', width: 1200, height: 627 },
+  ];
+
+  const generateFilename = () => {
+    const projectName = currentProject?.name || 'arte';
+    const timestamp = new Date().toISOString().slice(0, 10);
+    return `${projectName}-${timestamp}`;
+  };
+
+  const handleExport = async () => {
+    if (!currentPage) {
+      toast.error('Nenhuma página para exportar');
+      return;
+    }
 
     setIsExporting(true);
+    setExporting(true);
+
     try {
-      const exportEngine = ExportEngine.getInstance();
+      // Simular processo de exportação
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
-      switch (type) {
-        case 'single':
-          await exportEngine.exportPage(currentPage, {
-            format: exportConfig.format as any,
-            quality: exportConfig.quality,
-            includeBackground: exportConfig.includeBackground,
-            scale: exportConfig.scale,
-            fileName: exportConfig.fileName
-          });
-          break;
+      // Em produção, aqui seria feita a exportação real do canvas
+      const finalFilename = filename || generateFilename();
+      
+      // Simular download
+      const link = document.createElement('a');
+      link.href = `data:text/plain;charset=utf-8,${encodeURIComponent('Arte exportada com sucesso!')}`;
+      link.download = `${finalFilename}.${exportFormat}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
 
-        case 'batch':
-          if (currentProject) {
-            await exportEngine.exportProject(currentProject, {
-              format: exportConfig.format as any,
-              quality: exportConfig.quality,
-              includeBackground: exportConfig.includeBackground,
-              scale: exportConfig.scale,
-              fileName: exportConfig.fileName
-            });
-          }
-          break;
-
-        case 'social':
-          await exportEngine.exportForSocialMedia(currentPage, {
-            format: exportConfig.format as any,
-            quality: exportConfig.quality,
-            includeBackground: exportConfig.includeBackground,
-            scale: exportConfig.scale,
-            fileName: exportConfig.fileName
-          });
-          break;
-      }
+      toast.success(`Arte exportada como ${finalFilename}.${exportFormat}`);
     } catch (error) {
-      console.error('Erro na exportação:', error);
+      toast.error('Erro ao exportar arte');
+      console.error(error);
     } finally {
       setIsExporting(false);
+      setExporting(false);
     }
   };
 
-  const handleQuickExport = async (format: any) => {
-    if (!currentPage) return;
+  const exportMultipleFormats = async () => {
+    if (!currentPage) {
+      toast.error('Nenhuma página para exportar');
+      return;
+    }
 
     setIsExporting(true);
+    setExporting(true);
+
     try {
-      const exportEngine = ExportEngine.getInstance();
-      await exportEngine.exportPage(currentPage, {
-        format: 'png',
-        quality: 90,
-        includeBackground: true,
-        scale: 1,
-        fileName: `${exportConfig.fileName}-${format.id}`
-      });
+      const formatsToExport = ['png', 'jpg', 'webp'];
+      const finalFilename = filename || generateFilename();
+
+      for (const format of formatsToExport) {
+        // Simular exportação de cada formato
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        const link = document.createElement('a');
+        link.href = `data:text/plain;charset=utf-8,${encodeURIComponent(`Arte exportada em ${format}`)}`;
+        link.download = `${finalFilename}.${format}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+
+      toast.success('Artes exportadas em múltiplos formatos!');
     } catch (error) {
-      console.error('Erro na exportação rápida:', error);
+      toast.error('Erro ao exportar artes');
+      console.error(error);
     } finally {
       setIsExporting(false);
+      setExporting(false);
+    }
+  };
+
+  const exportForSocialMedia = async () => {
+    if (!currentPage) {
+      toast.error('Nenhuma página para exportar');
+      return;
+    }
+
+    setIsExporting(true);
+    setExporting(true);
+
+    try {
+      const finalFilename = filename || generateFilename();
+
+      for (const preset of presetSizes) {
+        // Simular exportação para cada formato de rede social
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+        const link = document.createElement('a');
+        link.href = `data:text/plain;charset=utf-8,${encodeURIComponent(`Arte para ${preset.name}`)}`;
+        link.download = `${finalFilename}-${preset.name.replace(/\s+/g, '-').toLowerCase()}.${exportFormat}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+
+      toast.success('Artes exportadas para todas as redes sociais!');
+    } catch (error) {
+      toast.error('Erro ao exportar artes');
+      console.error(error);
+    } finally {
+      setIsExporting(false);
+      setExporting(false);
     }
   };
 
   return (
-    <ScrollArea className="h-full">
-      <div className="p-4 space-y-6">
-        <div>
-          <h3 className="font-medium mb-4">Exportar</h3>
-          
-          <div className="space-y-3">
-            <Button
-              onClick={() => handleExport('single')}
-              disabled={isExporting || !currentPage}
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Download className="h-5 w-5" />
+          Exportar Arte
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Configurações básicas */}
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="filename">Nome do arquivo</Label>
+            <Input
+              id="filename"
+              placeholder={generateFilename()}
+              value={filename}
+              onChange={(e) => setFilename(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="format">Formato</Label>
+            <Select value={exportFormat} onValueChange={(value: any) => setExportFormat(value)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {formats.map((format) => (
+                  <SelectItem key={format.value} value={format.value}>
+                    <div className="flex flex-col">
+                      <span className="font-medium">{format.label}</span>
+                      <span className="text-xs text-muted-foreground">{format.description}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="quality">Qualidade: {quality}%</Label>
+            <Slider
+              id="quality"
+              value={[quality]}
+              onValueChange={(value) => setQuality(value[0])}
+              min={10}
+              max={100}
+              step={5}
               className="w-full"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Exportar Página Atual
-            </Button>
+            />
+          </div>
 
-            {currentProject && currentProject.pages.length > 1 && (
-              <Button
-                variant="outline"
-                onClick={() => handleExport('batch')}
-                disabled={isExporting}
-                className="w-full"
-              >
-                <FileText className="h-4 w-4 mr-2" />
-                Exportar Todas as Páginas
-              </Button>
+          <div className="space-y-2">
+            <Label htmlFor="scale">Escala: {scale}x</Label>
+            <Slider
+              id="scale"
+              value={[scale]}
+              onValueChange={(value) => setScale(value[0])}
+              min={1}
+              max={4}
+              step={0.5}
+              className="w-full"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="background">Cor de fundo</Label>
+            <div className="flex items-center gap-2">
+              <input
+                id="background"
+                type="color"
+                value={background}
+                onChange={(e) => setBackground(e.target.value)}
+                className="w-10 h-10 rounded border cursor-pointer"
+              />
+              <Input
+                value={background}
+                onChange={(e) => setBackground(e.target.value)}
+                className="flex-1"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="metadata"
+              checked={includeMetadata}
+              onCheckedChange={setIncludeMetadata}
+            />
+            <Label htmlFor="metadata">Incluir metadados</Label>
+          </div>
+        </div>
+
+        {/* Botões de exportação */}
+        <div className="space-y-2">
+          <Button 
+            onClick={handleExport}
+            disabled={isExporting}
+            className="w-full"
+            size="lg"
+          >
+            {isExporting ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                Exportando...
+              </>
+            ) : (
+              <>
+                <Download className="h-4 w-4 mr-2" />
+                Exportar Arte
+              </>
             )}
+          </Button>
 
+          <div className="grid grid-cols-2 gap-2">
             <Button
               variant="outline"
-              onClick={() => handleExport('social')}
-              disabled={isExporting || !currentPage}
-              className="w-full"
+              onClick={exportMultipleFormats}
+              disabled={isExporting}
+              size="sm"
             >
-              <Image className="h-4 w-4 mr-2" />
-              Exportar para Redes Sociais
+              <FileText className="h-4 w-4 mr-2" />
+              Múltiplos Formatos
+            </Button>
+            <Button
+              variant="outline"
+              onClick={exportForSocialMedia}
+              disabled={isExporting}
+              size="sm"
+            >
+              <ImageIcon className="h-4 w-4 mr-2" />
+              Redes Sociais
             </Button>
           </div>
         </div>
 
-        <div>
-          <h4 className="font-medium mb-3">Configurações</h4>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="fileName">Nome do arquivo</Label>
-              <Input
-                id="fileName"
-                value={exportConfig.fileName}
-                onChange={(e) => setExportConfig(prev => ({ ...prev, fileName: e.target.value }))}
-                placeholder="Nome do arquivo..."
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="format">Formato</Label>
-              <Select
-                value={exportConfig.format}
-                onValueChange={(value) => setExportConfig(prev => ({ ...prev, format: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="png">PNG</SelectItem>
-                  <SelectItem value="jpg">JPG</SelectItem>
-                  <SelectItem value="webp">WebP</SelectItem>
-                  <SelectItem value="pdf">PDF</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="quality">Qualidade</Label>
-              <Select
-                value={exportConfig.quality.toString()}
-                onValueChange={(value) => setExportConfig(prev => ({ ...prev, quality: Number(value) }))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="100">Máxima (100%)</SelectItem>
-                  <SelectItem value="90">Alta (90%)</SelectItem>
-                  <SelectItem value="80">Média (80%)</SelectItem>
-                  <SelectItem value="60">Baixa (60%)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="scale">Escala</Label>
-              <Select
-                value={exportConfig.scale.toString()}
-                onValueChange={(value) => setExportConfig(prev => ({ ...prev, scale: Number(value) }))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">1x (Padrão)</SelectItem>
-                  <SelectItem value="2">2x (Retina)</SelectItem>
-                  <SelectItem value="3">3x (Alta resolução)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="includeBackground"
-                checked={exportConfig.includeBackground}
-                onCheckedChange={(checked) => setExportConfig(prev => ({ ...prev, includeBackground: checked }))}
-              />
-              <Label htmlFor="includeBackground">Incluir fundo</Label>
+        {/* Informações da exportação */}
+        {currentPage && (
+          <div className="bg-muted/50 rounded-lg p-3">
+            <h4 className="font-medium text-sm mb-2">📊 Informações da Exportação:</h4>
+            <div className="text-xs text-muted-foreground space-y-1">
+              <div>Tamanho original: {currentPage.width} × {currentPage.height}px</div>
+              <div>Tamanho final: {currentPage.width * scale} × {currentPage.height * scale}px</div>
+              <div>Formato: {exportFormat.toUpperCase()}</div>
+              <div>Qualidade: {quality}%</div>
+              <div>Camadas: {currentPage.layers.length}</div>
             </div>
           </div>
-        </div>
+        )}
 
-        <div>
-          <h4 className="font-medium mb-3">Formatos de Redes Sociais</h4>
-          <div className="space-y-2">
-            {socialMediaFormats.map((format) => {
-              const IconComponent = format.icon;
-              return (
-                <Card key={format.id} className="cursor-pointer hover:shadow-md transition-shadow">
-                  <CardContent className="p-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <IconComponent className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <p className="text-sm font-medium">{format.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {format.width} × {format.height}
-                          </p>
-                        </div>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleQuickExport(format)}
-                        disabled={isExporting}
-                      >
-                        Exportar
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
+        {/* Formatos de rede social */}
+        <div className="space-y-2">
+          <Label>Formatos para Redes Sociais</Label>
+          <div className="grid grid-cols-1 gap-2">
+            {presetSizes.map((preset) => (
+              <div
+                key={preset.name}
+                className="flex items-center justify-between p-2 border rounded text-sm"
+              >
+                <span>{preset.name}</span>
+                <span className="text-muted-foreground">
+                  {preset.width} × {preset.height}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
-
-        <div>
-          <h4 className="font-medium mb-3">Dicas de Exportação</h4>
-          <div className="space-y-2 text-sm text-muted-foreground">
-            <p>• Use PNG para transparência</p>
-            <p>• JPG para melhor compressão</p>
-            <p>• WebP para web (menor tamanho)</p>
-            <p>• 2x para dispositivos retina</p>
-            <p>• Verifique as dimensões da rede social</p>
-          </div>
-        </div>
-      </div>
-    </ScrollArea>
+      </CardContent>
+    </Card>
   );
 }

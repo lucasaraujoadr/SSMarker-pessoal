@@ -601,9 +601,9 @@ export const useEditorStore = create<EditorStore>()(
     },
 
     undo: () => {
-      const { history, currentIndex } = get();
-      if (currentIndex >= 0) {
-        const action = history.actions[currentIndex];
+      const { history } = get();
+      if (history.currentIndex >= 0) {
+        const action = history.actions[history.currentIndex];
         // TODO: implementar lógica de undo
         set((state) => {
           state.history.currentIndex--;
@@ -612,9 +612,9 @@ export const useEditorStore = create<EditorStore>()(
     },
 
     redo: () => {
-      const { history, currentIndex } = get();
-      if (currentIndex < history.actions.length - 1) {
-        const action = history.actions[currentIndex + 1];
+      const { history } = get();
+      if (history.currentIndex < history.actions.length - 1) {
+        const action = history.actions[history.currentIndex + 1];
         // TODO: implementar lógica de redo
         set((state) => {
           state.history.currentIndex++;

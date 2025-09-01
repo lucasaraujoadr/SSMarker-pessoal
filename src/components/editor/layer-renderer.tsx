@@ -23,7 +23,7 @@ export function LayerRenderer({
 
   // Carregar imagem se for uma camada de imagem
   useEffect(() => {
-    if (layer.type === 'image' && layer.src) {
+    if (layer.type === 'image' && 'src' in layer && layer.src) {
       const img = new window.Image();
       img.crossOrigin = 'anonymous';
       img.onload = () => {
@@ -31,7 +31,7 @@ export function LayerRenderer({
       };
       img.src = layer.src;
     }
-  }, [layer.src, layer.type]);
+  }, [layer]);
 
   const handleClick = (e: any) => {
     e.cancelBubble = true;
@@ -48,56 +48,60 @@ export function LayerRenderer({
 
   const renderLayer = () => {
     switch (layer.type) {
-      case 'text':
+      case 'text': {
+        const textLayer = layer as any;
         return (
           <Text
-            x={layer.x}
-            y={layer.y}
-            width={layer.width}
-            height={layer.height}
-            text={layer.content}
-            fontSize={layer.fontSize}
-            fontFamily={layer.fontFamily}
-            fontWeight={layer.fontWeight}
-            fill={layer.color}
-            align={layer.align}
-            verticalAlign={layer.verticalAlign}
-            lineHeight={layer.lineHeight / layer.fontSize}
-            letterSpacing={layer.letterSpacing}
-            textDecoration={layer.textDecoration}
-            fontStyle={layer.fontStyle}
-            backgroundColor={layer.backgroundColor}
-            padding={layer.padding ? {
-              top: layer.padding.top,
-              right: layer.padding.right,
-              bottom: layer.padding.bottom,
-              left: layer.padding.left,
+            x={textLayer.x}
+            y={textLayer.y}
+            width={textLayer.width}
+            height={textLayer.height}
+            text={textLayer.content}
+            fontSize={textLayer.fontSize}
+            fontFamily={textLayer.fontFamily}
+            fontWeight={textLayer.fontWeight}
+            fill={textLayer.color}
+            align={textLayer.align}
+            verticalAlign={textLayer.verticalAlign}
+            lineHeight={textLayer.lineHeight / textLayer.fontSize}
+            letterSpacing={textLayer.letterSpacing}
+            textDecoration={textLayer.textDecoration}
+            fontStyle={textLayer.fontStyle}
+            backgroundColor={textLayer.backgroundColor}
+            padding={textLayer.padding ? {
+              top: textLayer.padding.top,
+              right: textLayer.padding.right,
+              bottom: textLayer.padding.bottom,
+              left: textLayer.padding.left,
             } : undefined}
-            cornerRadius={layer.borderRadius}
-            shadowColor={layer.shadow?.color}
-            shadowBlur={layer.shadow?.blur}
-            shadowOffsetX={layer.shadow?.x}
-            shadowOffsetY={layer.shadow?.y}
-            shadowOpacity={layer.shadow ? 1 : 0}
+            cornerRadius={textLayer.borderRadius}
+            shadowColor={textLayer.shadow?.color}
+            shadowBlur={textLayer.shadow?.blur}
+            shadowOffsetX={textLayer.shadow?.x}
+            shadowOffsetY={textLayer.shadow?.y}
+            shadowOpacity={textLayer.shadow ? 1 : 0}
             onClick={handleClick}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
             draggable
           />
         );
+      }
 
-      case 'image':
+
+      case 'image': {
+        const imageLayer = layer as any;
         return (
           <Image
-            x={layer.x}
-            y={layer.y}
-            width={layer.width}
-            height={layer.height}
+            x={imageLayer.x}
+            y={imageLayer.y}
+            width={imageLayer.width}
+            height={imageLayer.height}
             image={imageElement}
-            cornerRadius={layer.mask?.radius}
-            filters={layer.filters ? [
-              layer.filters.brightness && (() => {
-                const brightness = layer.filters!.brightness!;
+            cornerRadius={imageLayer.mask?.radius}
+            filters={imageLayer.filters ? [
+              imageLayer.filters.brightness && (() => {
+                const brightness = imageLayer.filters!.brightness!;
                 return (imageData: any) => {
                   const data = imageData.data;
                   for (let i = 0; i < data.length; i += 4) {
@@ -107,8 +111,8 @@ export function LayerRenderer({
                   }
                 };
               })(),
-              layer.filters.contrast && (() => {
-                const contrast = layer.filters!.contrast!;
+              imageLayer.filters.contrast && (() => {
+                const contrast = imageLayer.filters!.contrast!;
                 return (imageData: any) => {
                   const data = imageData.data;
                   const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
@@ -126,21 +130,23 @@ export function LayerRenderer({
             draggable
           />
         );
+      }
 
-      case 'shape':
-        switch (layer.shape) {
+      case 'shape': {
+        const shapeLayer = layer as any;
+        switch (shapeLayer.shape) {
           case 'rect':
             return (
               <Rect
-                x={layer.x}
-                y={layer.y}
-                width={layer.width}
-                height={layer.height}
-                fill={layer.fill}
-                stroke={layer.stroke}
-                strokeWidth={layer.strokeWidth}
-                dash={layer.strokeDasharray}
-                cornerRadius={layer.borderRadius}
+                x={shapeLayer.x}
+                y={shapeLayer.y}
+                width={shapeLayer.width}
+                height={shapeLayer.height}
+                fill={shapeLayer.fill}
+                stroke={shapeLayer.stroke}
+                strokeWidth={shapeLayer.strokeWidth}
+                dash={shapeLayer.strokeDasharray}
+                cornerRadius={shapeLayer.borderRadius}
                 onClick={handleClick}
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
@@ -183,11 +189,11 @@ export function LayerRenderer({
             if (layer.points && layer.points.length >= 6) {
               return (
                 <Line
-                  points={layer.points}
-                  stroke={layer.stroke}
-                  fill={layer.fill}
-                  strokeWidth={layer.strokeWidth}
-                  dash={layer.strokeDasharray}
+                  points={shapeLayer.points}
+                  stroke={shapeLayer.stroke}
+                  fill={shapeLayer.fill}
+                  strokeWidth={shapeLayer.strokeWidth}
+                  dash={shapeLayer.strokeDasharray}
                   closed
                   onClick={handleClick}
                   onMouseEnter={handleMouseEnter}
@@ -200,11 +206,11 @@ export function LayerRenderer({
 
           case 'star':
             // Implementação simplificada de estrela
-            const centerX = layer.x + layer.width / 2;
-            const centerY = layer.y + layer.height / 2;
-            const outerRadius = Math.min(layer.width, layer.height) / 2;
-            const innerRadius = outerRadius * (layer.innerRadius || 0.5);
-            const sides = layer.sides || 5;
+            const centerX = shapeLayer.x + shapeLayer.width / 2;
+            const centerY = shapeLayer.y + shapeLayer.height / 2;
+            const outerRadius = Math.min(shapeLayer.width, shapeLayer.height) / 2;
+            const innerRadius = outerRadius * (shapeLayer.innerRadius || 0.5);
+            const sides = shapeLayer.sides || 5;
             
             const points = [];
             for (let i = 0; i < sides * 2; i++) {
@@ -219,10 +225,10 @@ export function LayerRenderer({
             return (
               <Line
                 points={points}
-                stroke={layer.stroke}
-                fill={layer.fill}
-                strokeWidth={layer.strokeWidth}
-                dash={layer.strokeDasharray}
+                stroke={shapeLayer.stroke}
+                fill={shapeLayer.fill}
+                strokeWidth={shapeLayer.strokeWidth}
+                dash={shapeLayer.strokeDasharray}
                 closed
                 onClick={handleClick}
                 onMouseEnter={handleMouseEnter}
@@ -234,18 +240,20 @@ export function LayerRenderer({
           default:
             return null;
         }
+      }
 
-      case 'icon':
+      case 'icon': {
+        const iconLayer = layer as any;
         // Para ícones, renderizar como texto temporariamente
         return (
           <Text
-            x={layer.x}
-            y={layer.y}
-            width={layer.size}
-            height={layer.size}
-            text={layer.name}
-            fontSize={layer.size * 0.8}
-            fill={layer.color}
+            x={iconLayer.x}
+            y={iconLayer.y}
+            width={iconLayer.size}
+            height={iconLayer.size}
+            text={iconLayer.name}
+            fontSize={iconLayer.size * 0.8}
+            fill={iconLayer.color}
             align="center"
             verticalAlign="middle"
             onClick={handleClick}
@@ -254,6 +262,7 @@ export function LayerRenderer({
             draggable
           />
         );
+      }
 
       default:
         return null;

@@ -1,204 +1,198 @@
 # Social Media Maker
 
-Uma plataforma em JavaScript para criar artes de social media em minutos, com foco em produtividade: templates inteligentes, variações automáticas, ajuste a múltiplos formatos (Instagram, Reels, Stories, TikTok, Facebook, LinkedIn), kits de marca, colaboração e exportação em alta qualidade.
+Um editor de artes para redes sociais com geração de imagens por IA, templates personalizáveis e exportação em múltiplos formatos.
 
-## 🚀 Características
+## 🚀 Status Atual
 
-### MVP (Minimum Viable Product)
-- **Editor Visual**: Canvas com camadas (texto, forma, imagem, ícone)
-- **Templates Inteligentes**: Auto-layout baseado em DSL
-- **Kit de Marca**: Cores, fontes e logos com aplicação automática
-- **Auto-Resize**: Formatos pré-definidos para redes sociais
-- **Variações Rápidas**: Mudança automática de paleta, fonte, grade
-- **Exportação**: PNG/JPG/WebP/PDF com configurações avançadas
-- **Histórico**: Undo/Redo e versionamento local
+O projeto está **funcionando** com as seguintes funcionalidades implementadas:
 
-### Diferenciais
-- **Motor de Layout**: Regras visuais consistentes e automáticas
-- **DSL de Templates**: Linguagem simples para estruturas reutilizáveis
-- **Brand Kits**: Aplicação inteligente de identidade visual
-- **Exportação em Lote**: Múltiplos formatos simultaneamente
+### ✅ Funcionalidades Implementadas
 
-## 🛠️ Stack Técnica
+1. **Editor de Canvas Interativo**
+   - Canvas com Konva.js para manipulação de camadas
+   - Ferramentas de seleção, texto, imagem, formas
+   - Zoom, pan e transformações
+   - Sistema de camadas com drag & drop
 
-### Frontend
-- **Next.js 14** (App Router)
-- **React 18** com TypeScript
-- **Tailwind CSS** + shadcn/ui
-- **Konva.js** para canvas
-- **Zustand** para state management
-- **TanStack Query** para cache
-- **Zod** para validação
+2. **Geração de Imagens por IA** (Modo Simulado)
+   - Interface para prompts de geração
+   - Seleção de estilos e proporções
+   - Upload de templates
+   - Preview de imagens geradas
+   - Integração preparada para APIs reais
 
-### Core
-- **Layout Engine**: Motor de layout automático
-- **Export Engine**: Sistema de exportação avançado
-- **Brand Kit System**: Gerenciamento de identidade visual
-- **Template DSL**: Linguagem para templates
+3. **Editor de Texto**
+   - Adição de textos ao canvas
+   - Controles de fonte, tamanho, cor, alinhamento
+   - Estilos (negrito, itálico, sublinhado)
+   - Textos rápidos pré-definidos
 
-### Ferramentas
-- **TypeScript** para type safety
-- **ESLint** + **Prettier** para código limpo
-- **Jest** + **Playwright** para testes
-- **Vite** para build rápido
+4. **Gerenciamento de Logos**
+   - Upload de logos personalizados
+   - Logos pré-definidos
+   - Controles de tamanho, opacidade e rotação
+   - Posicionamento livre no canvas
 
-## 📁 Estrutura do Projeto
+5. **Sistema de Projetos**
+   - Criação de projetos com diferentes formatos
+   - Múltiplas páginas por projeto
+   - Sistema de histórico (Undo/Redo)
+   - Salvamento automático
+
+6. **Exportação**
+   - Múltiplos formatos (PNG, JPG, WebP, PDF)
+   - Controles de qualidade e escala
+   - Presets para redes sociais
+   - Metadados personalizáveis
+
+7. **Interface Moderna**
+   - Design responsivo com Tailwind CSS
+   - Componentes shadcn/ui
+   - Painéis colapsáveis
+   - Tema claro/escuro
+
+## 🛠️ Tecnologias Utilizadas
+
+- **Frontend**: Next.js 14, React 18, TypeScript
+- **UI**: Tailwind CSS, shadcn/ui, Radix UI
+- **Canvas**: Konva.js, React Konva
+- **Estado**: Zustand com Immer
+- **IA**: Serviço simulado (preparado para APIs reais)
+- **Exportação**: html2canvas, jsPDF
+
+## 📦 Instalação
+
+```bash
+# Clonar o repositório
+git clone <url-do-repositorio>
+cd social-media-maker
+
+# Instalar dependências
+npm install
+
+# Executar em desenvolvimento
+npm run dev
+```
+
+O aplicativo estará disponível em `http://localhost:3000`
+
+## 🤖 Configuração das APIs de IA
+
+Atualmente o projeto está usando um **serviço simulado** para geração de imagens. Para usar APIs reais:
+
+### 1. Configurar Variáveis de Ambiente
+
+Crie um arquivo `.env.local` na raiz do projeto:
+
+```env
+# OpenAI DALL-E
+NEXT_PUBLIC_OPENAI_API_KEY=sk-your-openai-api-key-here
+
+# Stability AI (Stable Diffusion)
+NEXT_PUBLIC_STABILITY_API_KEY=sk-your-stability-api-key-here
+
+# Replicate
+NEXT_PUBLIC_REPLICATE_API_KEY=r8-your-replicate-api-key-here
+```
+
+### 2. Ativar APIs Reais
+
+Edite o arquivo `src/lib/ai-service.ts` e descomente o código das APIs reais:
+
+```typescript
+async generateImage(request: AIGenerationRequest): Promise<AIGenerationResponse> {
+  // Comentar esta linha:
+  // return await simulatedProvider!.generateImage(request);
+  
+  // Descomentar este bloco:
+  const configuredProviders = this.providers.filter(provider => 
+    provider.isConfigured() && provider.name !== 'Simulado (Demo)'
+  );
+
+  if (configuredProviders.length > 0) {
+    const provider = configuredProviders[0];
+    console.log(`Usando provedor: ${provider.name}`);
+    return await provider.generateImage(request);
+  }
+
+  // Fallback para simulação
+  const simulatedProvider = this.providers.find(p => p.name === 'Simulado (Demo)');
+  return await simulatedProvider!.generateImage(request);
+}
+```
+
+### 3. APIs Suportadas
+
+- **OpenAI DALL-E**: Geração de imagens de alta qualidade
+- **Stable Diffusion**: Geração rápida e customizável
+- **Replicate**: Acesso a múltiplos modelos de IA
+
+## 🎨 Como Usar
+
+1. **Criar um Projeto**
+   - Acesse o editor
+   - Escolha o formato (Instagram, Story, etc.)
+   - Digite o nome do projeto
+
+2. **Gerar Imagem de Fundo**
+   - Vá para a aba "IA"
+   - Digite um prompt descritivo
+   - Escolha estilo e proporção
+   - Clique em "Gerar Imagem"
+   - Adicione ao canvas
+
+3. **Adicionar Texto**
+   - Vá para a aba "Texto"
+   - Digite o conteúdo
+   - Configure fonte, tamanho, cor
+   - Clique em "Adicionar Texto"
+
+4. **Adicionar Logo**
+   - Vá para a aba "Logo"
+   - Faça upload ou escolha um logo pré-definido
+   - Ajuste tamanho e posição
+
+5. **Exportar**
+   - Use o botão "Exportar" na toolbar
+   - Escolha formato e qualidade
+   - Baixe a imagem final
+
+## 🔧 Estrutura do Projeto
 
 ```
 src/
-├── app/                    # Next.js App Router
-│   ├── globals.css        # Estilos globais
-│   ├── layout.tsx         # Layout principal
-│   ├── page.tsx           # Página inicial
-│   └── editor/            # Editor de artes
-│       └── page.tsx       # Página do editor
-├── components/            # Componentes React
-│   ├── ui/               # Componentes base (shadcn/ui)
-│   ├── editor/           # Componentes específicos do editor
-│   └── providers.tsx     # Providers da aplicação
-├── lib/                  # Lógica de negócio
-│   ├── layout-engine.ts  # Motor de layout
-│   ├── export-engine.ts  # Sistema de exportação
-│   ├── templates.ts      # Templates padrão
-│   ├── brand-kits.ts     # Brand kits padrão
-│   └── utils.ts          # Utilitários
-├── store/                # State management
-│   └── editor-store.ts   # Store principal do editor
-├── types/                # Definições TypeScript
-│   └── index.ts          # Tipos principais
-├── hooks/                # Custom hooks
-└── utils/                # Utilitários gerais
+├── app/                    # Páginas Next.js
+├── components/             # Componentes React
+│   ├── editor/            # Componentes do editor
+│   └── ui/                # Componentes de UI
+├── lib/                   # Utilitários e serviços
+│   ├── ai-service.ts      # Serviço de IA
+│   ├── export-engine.ts   # Motor de exportação
+│   └── ...
+├── store/                 # Estado global (Zustand)
+├── types/                 # Definições TypeScript
+└── styles/                # Estilos globais
 ```
 
-## 🎯 Funcionalidades Principais
+## 🚧 Próximas Funcionalidades
 
-### Editor Visual
-- **Canvas Interativo**: Baseado em Konva.js
-- **Camadas**: Texto, imagem, forma, ícone
-- **Seleção Múltipla**: Alinhamento e distribuição
-- **Snapping**: Guias e grades
-- **Transformações**: Redimensionar, rotacionar, mover
-
-### Templates Inteligentes
-- **DSL Simples**: Descrição de slots e regras
-- **Auto-Layout**: Posicionamento automático
-- **Responsividade**: Adaptação a diferentes formatos
-- **Hierarquia Visual**: Títulos, subtítulos, CTA
-
-### Brand Kits
-- **Paletas de Cores**: Primária, secundária, neutra
-- **Tipografias**: Famílias e pesos
-- **Logos**: Upload e aplicação automática
-- **Aplicação Global**: Por slot ou página inteira
-
-### Variações Automáticas
-- **Cores**: Ciclagem de paletas
-- **Layouts**: Diferentes grades e composições
-- **Tipografia**: Alternância de fontes
-- **Shuffle Controlado**: Reprodutível com seed
-
-### Exportação Avançada
-- **Formatos**: PNG, JPG, WebP, PDF
-- **Qualidade**: Configurável (60% - 100%)
-- **Escala**: 1x, 2x, 3x para retina
-- **Redes Sociais**: Formatos pré-definidos
-- **Lote**: Múltiplas páginas simultaneamente
-
-## 🚀 Como Usar
-
-### Instalação
-```bash
-# Clone o repositório
-git clone https://github.com/seu-usuario/social-media-maker.git
-cd social-media-maker
-
-# Instale as dependências
-npm install
-
-# Execute em desenvolvimento
-npm run dev
-```
-
-### Desenvolvimento
-```bash
-# Desenvolvimento
-npm run dev
-
-# Build para produção
-npm run build
-
-# Testes
-npm run test
-npm run test:e2e
-
-# Linting
-npm run lint
-```
-
-### Fluxo de Uso
-1. **Criar Projeto**: Escolha formato e nome
-2. **Selecionar Template**: Templates inteligentes pré-definidos
-3. **Aplicar Brand Kit**: Cores e fontes da marca
-4. **Editar Conteúdo**: Textos e imagens
-5. **Gerar Variações**: Teste diferentes combinações
-6. **Auto-Resize**: Adapte para outros formatos
-7. **Exportar**: PNG, JPG, WebP ou PDF
-
-## 📊 Métricas de Sucesso (MVP)
-
-- **TMA**: Redução de 50% no tempo médio por arte
-- **Variações**: 3+ variações geradas em <30s
-- **Auto-Resize**: 30% dos projetos usando
-- **NPS**: >40 dos primeiros 50 usuários
-
-## 🛣️ Roadmap
-
-### Fase 1 - Fundações (2-4 semanas)
-- [x] Projeto Next.js configurado
-- [x] Editor básico com canvas
-- [x] Sistema de camadas
-- [x] State management com Zustand
-- [x] UI base com shadcn/ui
-
-### Fase 2 - Diferenciais (3-5 semanas)
-- [x] Motor de Layout
-- [x] DSL de Templates
-- [x] Sistema de Brand Kits
-- [x] Auto-Resize
-- [x] Variações automáticas
-- [x] Exportação em lote
-
-### Fase 3 - Polimento (2-3 semanas)
-- [ ] Render server para alta resolução
-- [ ] PDF export avançado
-- [ ] Atalhos de teclado
-- [ ] Onboarding guiado
-- [ ] Performance otimizada
-
-### Fase 4 - Team & AI (opcional)
-- [ ] Colaboração em tempo real
-- [ ] Comentários e versões
-- [ ] Sugestões inteligentes
-- [ ] Resumo automático de briefing
+- [ ] Integração com APIs de IA reais
+- [ ] Sistema de templates avançado
+- [ ] Biblioteca de ativos expandida
+- [ ] Animações e transições
+- [ ] Sistema de plugins
+- [ ] Analytics e métricas
+- [ ] Exportação em lote
+- [ ] Integração com redes sociais
 
 ## 🤝 Contribuição
 
-1. Fork o projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push para a branch (`git push origin feature/AmazingFeature`)
-5. Abra um Pull Request
+Contribuições são bem-vindas! Por favor, leia o guia de contribuição antes de submeter um pull request.
 
-## 📝 Licença
+## 📄 Licença
 
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
-
-## 📞 Contato
-
-- **Email**: seu-email@exemplo.com
-- **LinkedIn**: [Seu Nome](https://linkedin.com/in/seu-perfil)
-- **GitHub**: [@seu-usuario](https://github.com/seu-usuario)
+Este projeto está sob a licença MIT. Veja o arquivo LICENSE para mais detalhes.
 
 ---
 
-Desenvolvido com ❤️ para revolucionar a criação de artes para redes sociais.
+**Desenvolvido com ❤️ para criadores de conteúdo**

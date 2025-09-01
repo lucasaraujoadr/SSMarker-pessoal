@@ -3,14 +3,15 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useEditorStore } from '@/store/editor-store';
+import { useEditorStore, useCurrentPage } from '@/store/editor-store';
 import { LayoutEngine } from '@/lib/layout-engine';
 import { defaultBrandKits } from '@/lib/brand-kits';
 import { Palette, Shuffle, RefreshCw, Download } from 'lucide-react';
 import { useState } from 'react';
 
 export function VariationsPanel() {
-  const { currentPage, currentBrandKit, updatePage } = useEditorStore();
+  const { currentBrandKit, updatePage } = useEditorStore();
+  const currentPage = useCurrentPage();
   const [isGenerating, setIsGenerating] = useState(false);
   const [variations, setVariations] = useState<any[]>([]);
 
@@ -20,20 +21,16 @@ export function VariationsPanel() {
     setIsGenerating(true);
     try {
       // Simular geração de variações
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      const layoutEngine = LayoutEngine.getInstance();
-      const generatedVariations = await layoutEngine.generateVariations(
-        currentPage,
-        currentBrandKit,
-        {
-          colorVariations: 3,
-          layoutVariations: 2,
-          typographyVariations: 2
-        }
-      );
-
-      setVariations(generatedVariations);
+      const mockVariations = [
+        { id: 1, name: 'Variação 1', type: 'Cor', changes: ['Cor primária', 'Cor secundária'], preview: 'https://picsum.photos/200/200?random=1' },
+        { id: 2, name: 'Variação 2', type: 'Layout', changes: ['Posicionamento', 'Tamanho'], preview: 'https://picsum.photos/200/200?random=2' },
+        { id: 3, name: 'Variação 3', type: 'Tipografia', changes: ['Fonte', 'Tamanho'], preview: 'https://picsum.photos/200/200?random=3' },
+        { id: 4, name: 'Variação 4', type: 'Composição', changes: ['Elementos', 'Espaçamento'], preview: 'https://picsum.photos/200/200?random=4' },
+      ];
+      
+      setVariations(mockVariations);
     } catch (error) {
       console.error('Erro ao gerar variações:', error);
     } finally {

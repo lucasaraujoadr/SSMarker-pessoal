@@ -244,8 +244,7 @@ export class ExportEngine {
         title: config.filename,
         subject: 'Social Media Design',
         author: 'Social Media Maker',
-        creator: 'Social Media Maker',
-        creationDate: new Date()
+        creator: 'Social Media Maker'
       });
     }
     

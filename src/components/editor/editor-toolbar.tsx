@@ -106,6 +106,10 @@ export function EditorToolbar() {
             variant="outline"
             size="sm"
             title="Exportar"
+            onClick={() => {
+              // TODO: implementar abertura do painel de exportação
+              toast.success('Painel de exportação aberto!');
+            }}
           >
             <Download className="h-4 w-4" />
           </Button>

@@ -20,6 +20,9 @@ import { useEditorStore, useCurrentPage } from '@/store/editor-store';
 import { LayerList } from './layer-list';
 import { AssetLibrary } from './asset-library';
 import { BrandKitPanel } from './brand-kit-panel';
+import { AIGenerationPanel } from './ai-generation-panel';
+import { TextPanel } from './text-panel';
+import { LogoPanel } from './logo-panel';
 
 export function EditorSidebar() {
   const { sidebarOpen, setSidebarOpen } = useEditorStore();
@@ -56,14 +59,29 @@ export function EditorSidebar() {
 
       {/* Content */}
       <div className="flex-1 overflow-hidden">
-        <Tabs defaultValue="layers" className="h-full flex flex-col">
-          <TabsList className="grid w-full grid-cols-3">
+        <Tabs defaultValue="ai" className="h-full flex flex-col">
+          <TabsList className="grid w-full grid-cols-6">
+            <TabsTrigger value="ai">IA</TabsTrigger>
+            <TabsTrigger value="text">Texto</TabsTrigger>
+            <TabsTrigger value="logo">Logo</TabsTrigger>
             <TabsTrigger value="layers">Camadas</TabsTrigger>
             <TabsTrigger value="assets">Ativos</TabsTrigger>
             <TabsTrigger value="brand">Marca</TabsTrigger>
           </TabsList>
 
           <div className="flex-1 overflow-hidden">
+            <TabsContent value="ai" className="h-full m-0">
+              <AIGenerationPanel />
+            </TabsContent>
+
+            <TabsContent value="text" className="h-full m-0">
+              <TextPanel />
+            </TabsContent>
+
+            <TabsContent value="logo" className="h-full m-0">
+              <LogoPanel />
+            </TabsContent>
+
             <TabsContent value="layers" className="h-full m-0">
               <LayerList />
             </TabsContent>

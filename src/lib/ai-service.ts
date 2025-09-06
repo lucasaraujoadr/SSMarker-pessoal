@@ -325,12 +325,11 @@ export class AIService {
       },
     };
 
-    // Inicializar provedores
+    // Inicializar provedores (sem simulado)
     this.providers = [
       new OpenAIProvider(this.config.openai),
       new StableDiffusionProvider(this.config.stableDiffusion),
       new ReplicateProvider(this.config.replicate),
-      new SimulatedProvider(), // Sempre disponível como fallback
     ];
   }
 
@@ -344,30 +343,45 @@ export class AIService {
   }
 
   async generateImage(request: AIGenerationRequest): Promise<AIGenerationResponse> {
-    // Por enquanto, sempre usar o serviço simulado para testes
-    console.log('Usando provedor simulado (modo de teste)');
-    const simulatedProvider = this.providers.find(p => p.name === 'Simulado (Demo)');
-    return await simulatedProvider!.generateImage(request);
-    
-    // TODO: Descomentar quando quiser usar APIs reais
-    /*
-    // Tentar provedores configurados primeiro
-    const configuredProviders = this.providers.filter(provider => 
-      provider.isConfigured() && provider.name !== 'Simulado (Demo)'
-    );
+    // Sempre utilizar a rota de servidor (sem modo simulado)
+    try {
+      const startTime = Date.now();
+      const qualityLabel = (request.quality || 0) > 90 ? 'hd' : 'standard';
+      const res = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: request.prompt,
+          width: request.width || 1024,
+          height: request.height || 1024,
+          quality: qualityLabel,
+          model: request.model || this.config.openai?.model || 'dall-e-3',
+        }),
+      });
 
-    if (configuredProviders.length > 0) {
-      // Usar o primeiro provedor configurado
-      const provider = configuredProviders[0];
-      console.log(`Usando provedor: ${provider.name}`);
-      return await provider.generateImage(request);
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.success && data?.imageUrl) {
+          return {
+            success: true,
+            imageUrl: data.imageUrl,
+            metadata: {
+              model: data?.metadata?.model || (request.model || this.config.openai?.model || 'dall-e-3'),
+              generationTime: Date.now() - startTime,
+              apiProvider: 'OpenAI',
+            },
+          };
+        }
+        return { success: false, error: data?.error || 'Erro desconhecido ao gerar imagem' };
+      }
+
+      const errorText = await res.text().catch(() => 'Erro desconhecido');
+      console.error('Falha na rota de servidor /api/ai/generate:', errorText);
+      return { success: false, error: errorText };
+    } catch (e: any) {
+      console.error('Erro chamando rota de servidor /api/ai/generate:', e?.message || e);
+      return { success: false, error: e?.message || 'Erro ao chamar servidor' };
     }
-
-    // Fallback para simulação
-    console.log('Usando provedor simulado (nenhuma API configurada)');
-    const simulatedProvider = this.providers.find(p => p.name === 'Simulado (Demo)');
-    return await simulatedProvider!.generateImage(request);
-    */
   }
 
   async generateWithProvider(providerName: string, request: AIGenerationRequest): Promise<AIGenerationResponse> {

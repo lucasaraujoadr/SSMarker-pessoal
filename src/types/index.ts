@@ -20,6 +20,9 @@ export type Template = {
   tags: string[];
   createdAt?: Date;
   updatedAt?: Date;
+  // Avançado (opcional): variantes e componentes reutilizáveis
+  variants?: TemplateVariant[];
+  components?: TemplateComponent[];
 };
 
 export type TemplateDSL = {
@@ -53,6 +56,27 @@ export type TemplateSlot = {
     minHeight?: number;
     maxHeight?: number;
   };
+  // Avançado (opcional)
+  zIndex?: number;
+  visible?: boolean;
+  style?: Record<string, any>;
+};
+
+// Avançado: variantes de template (aplicam mudanças em slots/regras)
+export type TemplateVariant = {
+  id: string;
+  name: string;
+  description?: string;
+  changes: VariationChange[];
+  tags?: string[];
+};
+
+// Avançado: componentes reutilizáveis (blocos) dentro de um template
+export type TemplateComponent = {
+  id: string;
+  name: string;
+  slots: TemplateSlot[];
+  rules?: Partial<TemplateDSL['rules']>;
 };
 
 export type Project = {

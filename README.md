@@ -85,7 +85,10 @@ Atualmente o projeto está usando um **serviço simulado** para geração de ima
 Crie um arquivo `.env.local` na raiz do projeto:
 
 ```env
-# OpenAI DALL-E
+# OpenAI (usar esta no servidor, preferível)
+OPENAI_API_KEY=sk-your-openai-api-key-here
+
+# Alternativo (exposto no client, use apenas se necessário)
 NEXT_PUBLIC_OPENAI_API_KEY=sk-your-openai-api-key-here
 
 # Stability AI (Stable Diffusion)
@@ -93,33 +96,20 @@ NEXT_PUBLIC_STABILITY_API_KEY=sk-your-stability-api-key-here
 
 # Replicate
 NEXT_PUBLIC_REPLICATE_API_KEY=r8-your-replicate-api-key-here
+
+# Habilitar uso da rota de servidor (recomendado)
+NEXT_PUBLIC_USE_SERVER_AI=true
 ```
 
 ### 2. Ativar APIs Reais
 
-Edite o arquivo `src/lib/ai-service.ts` e descomente o código das APIs reais:
+A integração de IA real já está configurada via uma rota de servidor.
 
-```typescript
-async generateImage(request: AIGenerationRequest): Promise<AIGenerationResponse> {
-  // Comentar esta linha:
-  // return await simulatedProvider!.generateImage(request);
-  
-  // Descomentar este bloco:
-  const configuredProviders = this.providers.filter(provider => 
-    provider.isConfigured() && provider.name !== 'Simulado (Demo)'
-  );
+- Confirme que `NEXT_PUBLIC_USE_SERVER_AI=true` no `.env.local`
+- Forneça sua `OPENAI_API_KEY`
+- O frontend chamará `POST /api/ai/generate` com o prompt e dimensões
 
-  if (configuredProviders.length > 0) {
-    const provider = configuredProviders[0];
-    console.log(`Usando provedor: ${provider.name}`);
-    return await provider.generateImage(request);
-  }
-
-  // Fallback para simulação
-  const simulatedProvider = this.providers.find(p => p.name === 'Simulado (Demo)');
-  return await simulatedProvider!.generateImage(request);
-}
-```
+Nenhuma alteração adicional no código é necessária.
 
 ### 3. APIs Suportadas
 

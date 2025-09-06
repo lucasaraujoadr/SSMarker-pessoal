@@ -377,6 +377,70 @@ export const defaultTemplates: Template[] = [
       ['#FFFFFF', '#F8F9FA', '#E9ECEF', '#6C757D', '#212529'],
       ['#000000', '#212529', '#495057', '#ADB5BD', '#F8F9FA']
     ]
+  },
+
+  // Template Avançado com componentes e variantes
+  {
+    id: 'promo-advanced',
+    name: 'Promo Advanced',
+    format: 'IG_SQUARE',
+    category: 'marketing',
+    tags: ['promo', 'advanced', 'components', 'variants'],
+    thumbnail: '/templates/promo-advanced.jpg',
+    dsl: {
+      grid: { cols: 12, rows: 12, gutter: 16, margin: 48 },
+      slots: [
+        { id: 'bg', type: 'image', area: { x: 0, y: 0, w: 12, h: 12 }, fit: 'cover', role: 'bg' },
+        { id: 'overlay', type: 'shape', area: { x: 0, y: 0, w: 12, h: 12 }, role: 'bg', style: { opacity: 0.4 } },
+        { id: 'title', type: 'text', area: { x: 1, y: 2, w: 10, h: 3 }, role: 'h1', defaultContent: 'Mega Promoção', constraints: { minWidth: 200, maxWidth: 800 }, zIndex: 2 },
+        { id: 'subtitle', type: 'text', area: { x: 1, y: 5, w: 8, h: 2 }, role: 'h2', defaultContent: 'Descontos imperdíveis', constraints: { minWidth: 150, maxWidth: 600 }, zIndex: 2 },
+        { id: 'badge', type: 'shape', area: { x: 9, y: 1, w: 2, h: 2 }, role: 'cta', zIndex: 3, style: { borderRadius: 9999 } },
+        { id: 'badge-text', type: 'text', area: { x: 9, y: 1, w: 2, h: 2 }, role: 'cta', defaultContent: '50% OFF', zIndex: 4 },
+        { id: 'cta', type: 'text', area: { x: 1, y: 9, w: 4, h: 1 }, role: 'cta', defaultContent: 'Comprar Agora', constraints: { minWidth: 80, maxWidth: 200 }, zIndex: 2 },
+        { id: 'logo', type: 'image', area: { x: 10, y: 10, w: 2, h: 2 }, fit: 'contain', role: 'logo', zIndex: 2 }
+      ],
+      rules: {
+        typographyScale: 1.2,
+        contrastMin: 4.5,
+        safeAreas: { story: { top: 160, bottom: 220 } }
+      }
+    },
+    variants: [
+      {
+        id: 'color-alt',
+        name: 'Cores Alternadas',
+        changes: [
+          { target: 'overlay', property: 'style.fill', value: '#00000088' },
+          { target: 'badge', property: 'style.fill', value: '#EF4444' },
+          { target: 'badge-text', property: 'style.color', value: '#FFFFFF' }
+        ],
+        tags: ['color']
+      },
+      {
+        id: 'compact',
+        name: 'Compacto',
+        changes: [
+          { target: 'title', property: 'area.y', value: 1 },
+          { target: 'subtitle', property: 'area.y', value: 4 },
+          { target: 'cta', property: 'area.y', value: 10 }
+        ],
+        tags: ['layout']
+      }
+    ],
+    components: [
+      {
+        id: 'price-tag',
+        name: 'Price Tag',
+        slots: [
+          { id: 'price-bg', type: 'shape', area: { x: 8, y: 8, w: 3, h: 2 }, role: 'cta', style: { borderRadius: 8 } },
+          { id: 'price-text', type: 'text', area: { x: 8, y: 8, w: 3, h: 2 }, role: 'cta', defaultContent: 'R$ 99,90' }
+        ]
+      }
+    ],
+    recommendedPalettes: [
+      ['#0F172A', '#1E293B', '#2563EB', '#F59E0B', '#F8FAFC'],
+      ['#111827', '#374151', '#10B981', '#F43F5E', '#F9FAFB']
+    ]
   }
 ];
 

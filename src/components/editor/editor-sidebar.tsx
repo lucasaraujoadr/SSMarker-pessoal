@@ -5,28 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Layers, 
-  Image, 
-  Type, 
-  Square, 
-  Palette, 
-  FolderOpen,
-  Plus,
-  Eye,
-  EyeOff,
-  Lock,
-  Unlock
 } from 'lucide-react';
-import { useEditorStore, useCurrentPage } from '@/store/editor-store';
-import { LayerList } from './layer-list';
-import { AssetLibrary } from './asset-library';
-import { BrandKitPanel } from './brand-kit-panel';
+import { useEditorStore } from '@/store/editor-store';
 import { AIGenerationPanel } from './ai-generation-panel';
 import { TextPanel } from './text-panel';
 import { LogoPanel } from './logo-panel';
 
 export function EditorSidebar() {
   const { sidebarOpen, setSidebarOpen } = useEditorStore();
-  const currentPage = useCurrentPage();
 
   if (!sidebarOpen) {
     return (
@@ -60,13 +46,10 @@ export function EditorSidebar() {
       {/* Content */}
       <div className="flex-1 overflow-hidden">
         <Tabs defaultValue="ai" className="h-full flex flex-col">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="ai">IA</TabsTrigger>
             <TabsTrigger value="text">Texto</TabsTrigger>
             <TabsTrigger value="logo">Logo</TabsTrigger>
-            <TabsTrigger value="layers">Camadas</TabsTrigger>
-            <TabsTrigger value="assets">Ativos</TabsTrigger>
-            <TabsTrigger value="brand">Marca</TabsTrigger>
           </TabsList>
 
           <div className="flex-1 overflow-hidden">
@@ -81,34 +64,8 @@ export function EditorSidebar() {
             <TabsContent value="logo" className="h-full m-0">
               <LogoPanel />
             </TabsContent>
-
-            <TabsContent value="layers" className="h-full m-0">
-              <LayerList />
-            </TabsContent>
-
-            <TabsContent value="assets" className="h-full m-0">
-              <AssetLibrary />
-            </TabsContent>
-
-            <TabsContent value="brand" className="h-full m-0">
-              <BrandKitPanel />
-            </TabsContent>
           </div>
         </Tabs>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="border-t p-4">
-        <div className="grid grid-cols-2 gap-2">
-          <Button variant="outline" size="sm">
-            <Plus className="h-4 w-4 mr-2" />
-            Adicionar
-          </Button>
-          <Button variant="outline" size="sm">
-            <FolderOpen className="h-4 w-4 mr-2" />
-            Importar
-          </Button>
-        </div>
       </div>
     </div>
   );

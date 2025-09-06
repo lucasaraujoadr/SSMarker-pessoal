@@ -3,7 +3,7 @@
 import { useRef, useEffect, useState } from 'react';
 import { useEditorStore, useCurrentPage, useSelectedLayers } from '@/store/editor-store';
 import { LayerRenderer } from './layer-renderer';
-import { Stage, Layer, Rect, useKonvaSetup } from '@/lib/konva-wrapper';
+import { Stage, Layer, Rect, Line, useKonvaSetup } from '@/lib/konva-wrapper';
 
 export function EditorCanvas() {
   const stageRef = useRef<any>(null);
@@ -18,6 +18,15 @@ export function EditorCanvas() {
     zoom, 
     pan, 
     setPan, 
+    setZoom,
+    viewportLocked,
+    showGrid,
+    showSafeAreas,
+    showGuides,
+    guides,
+    setGuides,
+    clearGuides,
+    fitRequestId,
     selectedLayerIds, 
     selectLayer, 
     clearSelection,
@@ -60,7 +69,7 @@ export function EditorCanvas() {
   };
 
   const handleMouseMove = (e: any) => {
-    if (tool === 'hand' && isMoving) {
+    if (!viewportLocked && tool === 'hand' && isMoving) {
       const stage = e.target.getStage();
       const oldPos = stage.position();
       setPan({
@@ -71,12 +80,13 @@ export function EditorCanvas() {
   };
 
   const handleMouseUp = () => {
-    if (tool === 'hand') {
+    if (!viewportLocked && tool === 'hand') {
       setIsMoving(false);
     }
   };
 
   const handleWheel = (e: any) => {
+    if (viewportLocked) return;
     e.evt.preventDefault();
     
     const stage = e.target.getStage();
@@ -101,6 +111,41 @@ export function EditorCanvas() {
     stage.batchDraw();
   };
 
+  // Auto "fit to screen" quando a página ou container muda
+  useEffect(() => {
+    if (!currentPage || stageSize.width === 0 || stageSize.height === 0) return;
+    const padding = 96; // px (48 de cada lado)
+    const availableWidth = Math.max(100, stageSize.width - padding);
+    const availableHeight = Math.max(100, stageSize.height - padding);
+    const scale = Math.min(availableWidth / currentPage.width, availableHeight / currentPage.height);
+    const clamped = Math.max(0.1, Math.min(5, scale));
+    const offsetX = (stageSize.width - currentPage.width * clamped) / 2;
+    const offsetY = (stageSize.height - currentPage.height * clamped) / 2;
+    setZoom(clamped);
+    setPan({ x: offsetX, y: offsetY });
+  }, [currentPage?.width, currentPage?.height, stageSize.width, stageSize.height, fitRequestId, setPan, setZoom]);
+
+  const fitToScreen = () => {
+    if (!currentPage) return;
+    const padding = 96;
+    const availableWidth = Math.max(100, stageSize.width - padding);
+    const availableHeight = Math.max(100, stageSize.height - padding);
+    const scale = Math.min(availableWidth / currentPage.width, availableHeight / currentPage.height);
+    const clamped = Math.max(0.1, Math.min(5, scale));
+    const offsetX = (stageSize.width - currentPage.width * clamped) / 2;
+    const offsetY = (stageSize.height - currentPage.height * clamped) / 2;
+    setZoom(clamped);
+    setPan({ x: offsetX, y: offsetY });
+  };
+
+  const setActualSize = () => {
+    if (!currentPage) return;
+    const offsetX = (stageSize.width - currentPage.width) / 2;
+    const offsetY = (stageSize.height - currentPage.height) / 2;
+    setZoom(1);
+    setPan({ x: offsetX, y: offsetY });
+  };
+
   if (!currentPage) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -112,6 +157,7 @@ export function EditorCanvas() {
   return (
     <div 
       ref={containerRef}
+      id="editor-canvas-snapshot"
       className="flex-1 relative bg-muted/20 overflow-hidden"
       style={{ cursor: tool === 'hand' ? 'grab' : 'default' }}
     >
@@ -132,7 +178,7 @@ export function EditorCanvas() {
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onWheel={handleWheel}
-        draggable={tool === 'hand'}
+        draggable={!viewportLocked && tool === 'hand'}
       >
         {/* Background layer */}
         <Layer>
@@ -145,6 +191,24 @@ export function EditorCanvas() {
             stroke="#e5e7eb"
             strokeWidth={1}
           />
+          {/* Safe areas (exemplo para Story) */}
+          {showSafeAreas && (
+            <>
+              <Rect x={0} y={0} width={currentPage.width} height={160} fill="rgba(0,0,0,0.05)" />
+              <Rect x={0} y={currentPage.height - 220} width={currentPage.width} height={220} fill="rgba(0,0,0,0.05)" />
+            </>
+          )}
+          {/* Grid leve sobre a página */}
+          {showGrid && (
+            <>
+              {Array.from({ length: Math.floor(currentPage.width / 16) }).map((_, i) => (
+                <Line key={`v-${i}`} points={[i * 16, 0, i * 16, currentPage.height]} stroke="#eef2f7" strokeWidth={1} />
+              ))}
+              {Array.from({ length: Math.floor(currentPage.height / 16) }).map((_, i) => (
+                <Line key={`h-${i}`} points={[0, i * 16, currentPage.width, i * 16]} stroke="#eef2f7" strokeWidth={1} />
+              ))}
+            </>
+          )}
         </Layer>
 
         {/* Content layer */}
@@ -176,6 +240,13 @@ export function EditorCanvas() {
               fill="transparent"
             />
           ))}
+          {/* Guides visuais */}
+          {showGuides && guides.vertical !== undefined && (
+            <Line points={[guides.vertical!, 0, guides.vertical!, currentPage.height]} stroke="#22c55e" dash={[4,4]} strokeWidth={1} />
+          )}
+          {showGuides && guides.horizontal !== undefined && (
+            <Line points={[0, guides.horizontal!, currentPage.width, guides.horizontal!]} stroke="#22c55e" dash={[4,4]} strokeWidth={1} />
+          )}
         </Layer>
       </Stage>
 
@@ -189,9 +260,23 @@ export function EditorCanvas() {
         </div>
       </div>
 
-      {/* Overlay com zoom */}
-      <div className="absolute top-4 right-4 bg-background/80 backdrop-blur rounded-lg px-3 py-2 text-sm">
-        <div className="text-muted-foreground">
+      {/* Overlay com zoom e controles */}
+      <div className="absolute top-4 right-4 bg-background/80 backdrop-blur rounded-lg px-3 py-2 text-sm flex items-center gap-2">
+        <button
+          onClick={fitToScreen}
+          className="px-2 py-1 rounded border text-xs hover:bg-muted"
+          title="Ajustar à tela"
+        >
+          Ajustar
+        </button>
+        <button
+          onClick={setActualSize}
+          className="px-2 py-1 rounded border text-xs hover:bg-muted"
+          title="Tamanho real"
+        >
+          100%
+        </button>
+        <div className="text-muted-foreground min-w-[44px] text-center">
           {Math.round(zoom * 100)}%
         </div>
       </div>

@@ -10,6 +10,9 @@ export interface AIGenerationRequest {
   quality?: number;
   seed?: number;
   model?: string;
+  // Novo: referência opcional (template enviado pelo usuário)
+  referenceImageUrl?: string;
+  instructions?: string;
 }
 
 export interface AIGenerationResponse {
@@ -279,8 +282,10 @@ class SimulatedProvider implements AIProvider {
     const width = request.width || 1024;
     const height = request.height || 1024;
     
-    // Usar Picsum para simular imagens geradas
-    const imageUrl = `https://picsum.photos/${width}/${height}?random=${Date.now()}`;
+    // Se o usuário enviou um template de referência, usar como "base" (simulado)
+    const imageUrl = request.referenceImageUrl
+      ? request.referenceImageUrl
+      : `https://picsum.photos/${width}/${height}?random=${Date.now()}`;
 
     return {
       success: true,
@@ -325,11 +330,12 @@ export class AIService {
       },
     };
 
-    // Inicializar provedores (sem simulado)
+    // Inicializar provedores (inclui simulado para testes)
     this.providers = [
       new OpenAIProvider(this.config.openai),
       new StableDiffusionProvider(this.config.stableDiffusion),
       new ReplicateProvider(this.config.replicate),
+      new SimulatedProvider(),
     ];
   }
 
@@ -343,45 +349,9 @@ export class AIService {
   }
 
   async generateImage(request: AIGenerationRequest): Promise<AIGenerationResponse> {
-    // Sempre utilizar a rota de servidor (sem modo simulado)
-    try {
-      const startTime = Date.now();
-      const qualityLabel = (request.quality || 0) > 90 ? 'hd' : 'standard';
-      const res = await fetch('/api/ai/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: request.prompt,
-          width: request.width || 1024,
-          height: request.height || 1024,
-          quality: qualityLabel,
-          model: request.model || this.config.openai?.model || 'dall-e-3',
-        }),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        if (data?.success && data?.imageUrl) {
-          return {
-            success: true,
-            imageUrl: data.imageUrl,
-            metadata: {
-              model: data?.metadata?.model || (request.model || this.config.openai?.model || 'dall-e-3'),
-              generationTime: Date.now() - startTime,
-              apiProvider: 'OpenAI',
-            },
-          };
-        }
-        return { success: false, error: data?.error || 'Erro desconhecido ao gerar imagem' };
-      }
-
-      const errorText = await res.text().catch(() => 'Erro desconhecido');
-      console.error('Falha na rota de servidor /api/ai/generate:', errorText);
-      return { success: false, error: errorText };
-    } catch (e: any) {
-      console.error('Erro chamando rota de servidor /api/ai/generate:', e?.message || e);
-      return { success: false, error: e?.message || 'Erro ao chamar servidor' };
-    }
+    // Usar provedor simulado para testes
+    const simulatedProvider = this.providers.find(p => p.name === 'Simulado (Demo)');
+    return await simulatedProvider!.generateImage(request);
   }
 
   async generateWithProvider(providerName: string, request: AIGenerationRequest): Promise<AIGenerationResponse> {

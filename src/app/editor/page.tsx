@@ -12,22 +12,16 @@ import toast from 'react-hot-toast';
 
 export default function EditorPage() {
   const router = useRouter();
-  const { currentProject } = useEditorStore();
+  const { currentProject, createProject } = useEditorStore();
   const currentPage = useCurrentPage();
 
   useEffect(() => {
     if (!currentProject) {
-      toast.error('Nenhum projeto encontrado');
-      router.push('/');
+      // Auto criar projeto simples (IG_SQUARE) para fluxo rápido
+      createProject('Novo Projeto', 'IG_SQUARE');
       return;
     }
-
-    if (!currentPage) {
-      toast.error('Nenhuma página encontrada');
-      router.push('/');
-      return;
-    }
-  }, [currentProject, currentPage, router]);
+  }, [currentProject, createProject]);
 
   if (!currentProject || !currentPage) {
     return (
@@ -46,7 +40,6 @@ export default function EditorPage() {
       <div className="flex flex-1 overflow-hidden">
         <EditorSidebar />
         <EditorCanvas />
-        <EditorPanels />
       </div>
     </EditorLayout>
   );

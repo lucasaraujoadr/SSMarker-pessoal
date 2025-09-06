@@ -17,7 +17,7 @@ import {
   Palette,
   Type
 } from 'lucide-react';
-import { useEditorStore } from '@/store/editor-store';
+import { useEditorStore, useCurrentPage } from '@/store/editor-store';
 import { aiService } from '@/lib/ai-service';
 import toast from 'react-hot-toast';
 
@@ -27,12 +27,17 @@ interface AIGenerationPanelProps {
 
 export function AIGenerationPanel({ onImageGenerated }: AIGenerationPanelProps) {
   const { addLayer, currentProject } = useEditorStore();
+  const currentPage = useCurrentPage();
   const [isGenerating, setIsGenerating] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [prompt, setPrompt] = useState('');
   const [style, setStyle] = useState('modern');
   const [aspectRatio, setAspectRatio] = useState('1:1');
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [referenceUrl, setReferenceUrl] = useState<string | null>(null);
+  const [title, setTitle] = useState('');
+  const [subtitle, setSubtitle] = useState('');
+  const [footer, setFooter] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const styles = [
@@ -63,7 +68,7 @@ export function AIGenerationPanel({ onImageGenerated }: AIGenerationPanelProps) 
     setAspectRatio(value);
   };
 
-  const generateImage = async () => {
+  const generateImage = async (applyToCanvas: boolean = false) => {
     if (!prompt.trim()) {
       toast.error('Digite um prompt para gerar a imagem');
       return;
@@ -80,10 +85,17 @@ export function AIGenerationPanel({ onImageGenerated }: AIGenerationPanelProps) 
         width,
         height,
         quality: 90,
+        referenceImageUrl: referenceUrl || undefined,
+        instructions: prompt,
       });
 
       if (response.success && response.imageUrl) {
         setGeneratedImage(response.imageUrl);
+        if (applyToCanvas) {
+          // aplica direto ao canvas
+          applyImageToCanvas(response.imageUrl, width, height);
+          onImageGenerated?.(response.imageUrl);
+        }
         toast.success('Imagem gerada com sucesso!');
       } else {
         toast.error(response.error || 'Erro ao gerar imagem');
@@ -111,7 +123,7 @@ export function AIGenerationPanel({ onImageGenerated }: AIGenerationPanelProps) 
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       const imageUrl = URL.createObjectURL(file);
-      setGeneratedImage(imageUrl);
+      setReferenceUrl(imageUrl); // usar como referência (não substitui a gerada)
       
       toast.success('Template carregado com sucesso!');
     } catch (error) {
@@ -122,26 +134,103 @@ export function AIGenerationPanel({ onImageGenerated }: AIGenerationPanelProps) 
     }
   };
 
-  const addImageToCanvas = () => {
-    if (!generatedImage || !currentProject) return;
+  const applyImageToCanvas = (imageUrl: string, genW: number, genH: number) => {
+    if (!currentProject || !currentPage) return;
 
-    const selectedRatio = aspectRatios.find(ratio => ratio.value === aspectRatio);
-    const { width, height } = selectedRatio || { width: 1080, height: 1080 };
-
+    // imagem como fundo do tamanho da página selecionada
     addLayer({
       type: 'image',
-      x: 50,
-      y: 50,
-      width: width / 4, // Escalar para o canvas
-      height: height / 4,
+      x: 0,
+      y: 0,
+      width: currentPage.width,
+      height: currentPage.height,
       rotation: 0,
       opacity: 1,
       visible: true,
       locked: false,
       name: 'Imagem Gerada',
-      src: generatedImage,
+      src: imageUrl,
       fit: 'cover',
     } as any);
+
+    const baseX = 60;
+    const baseY = 60;
+    const maxW = Math.max(240, Math.floor(width / 3));
+
+    if (title.trim()) {
+      addLayer({
+        type: 'text',
+        x: baseX,
+        y: baseY,
+        width: maxW,
+        height: 60,
+        rotation: 0,
+        opacity: 1,
+        visible: true,
+        locked: false,
+        name: 'Título',
+        content: title,
+        fontFamily: 'Inter',
+        fontWeight: 700,
+        fontSize: 32,
+        lineHeight: 36,
+        letterSpacing: 0,
+        color: '#ffffff',
+        align: 'left',
+        verticalAlign: 'top',
+        shadow: { x: 0, y: 2, blur: 8, color: 'rgba(0,0,0,0.35)' },
+      } as any);
+    }
+
+    if (subtitle.trim()) {
+      addLayer({
+        type: 'text',
+        x: baseX,
+        y: baseY + 70,
+        width: maxW,
+        height: 48,
+        rotation: 0,
+        opacity: 1,
+        visible: true,
+        locked: false,
+        name: 'Subtítulo',
+        content: subtitle,
+        fontFamily: 'Inter',
+        fontWeight: 500,
+        fontSize: 18,
+        lineHeight: 24,
+        letterSpacing: 0,
+        color: '#ffffff',
+        align: 'left',
+        verticalAlign: 'top',
+        shadow: { x: 0, y: 2, blur: 6, color: 'rgba(0,0,0,0.35)' },
+      } as any);
+    }
+
+    if (footer.trim()) {
+      addLayer({
+        type: 'text',
+        x: baseX,
+        y: baseY + 70 + 56,
+        width: maxW,
+        height: 40,
+        rotation: 0,
+        opacity: 1,
+        visible: true,
+        locked: false,
+        name: 'Rodapé',
+        content: footer,
+        fontFamily: 'Inter',
+        fontWeight: 500,
+        fontSize: 14,
+        lineHeight: 18,
+        letterSpacing: 0,
+        color: '#ffffff',
+        align: 'left',
+        verticalAlign: 'top',
+        shadow: { x: 0, y: 2, blur: 6, color: 'rgba(0,0,0,0.35)' },
+      } as any);
+    }
 
     toast.success('Imagem adicionada ao canvas!');
     onImageGenerated?.(generatedImage);
@@ -151,6 +240,13 @@ export function AIGenerationPanel({ onImageGenerated }: AIGenerationPanelProps) 
     if (prompt.trim()) {
       generateImage();
     }
+  };
+
+  const addImageToCanvas = () => {
+    if (!generatedImage) return;
+    const selectedRatio = aspectRatios.find(ratio => ratio.value === aspectRatio);
+    const { width, height } = selectedRatio || { width: 1080, height: 1080 };
+    applyImageToCanvas(generatedImage, width, height);
   };
 
   return (
@@ -164,16 +260,16 @@ export function AIGenerationPanel({ onImageGenerated }: AIGenerationPanelProps) 
       <CardContent className="space-y-4">
         <Tabs defaultValue="generate" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="generate">Gerar com IA</TabsTrigger>
-            <TabsTrigger value="upload">Upload Template</TabsTrigger>
+            <TabsTrigger value="generate">Prompt</TabsTrigger>
+            <TabsTrigger value="upload">Enviar Modelo</TabsTrigger>
           </TabsList>
 
           <TabsContent value="generate" className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="prompt">Prompt de Geração</Label>
+              <Label htmlFor="prompt">Descreva tudo aqui (modelo, formato, textos, estilo)</Label>
               <Textarea
                 id="prompt"
-                placeholder="Ex: arte moderna azul e branca para promoção fitness, com elementos geométricos e tipografia bold"
+                placeholder="Ex: 'Use o modelo enviado como referência e gere um Story moderno com o texto X...'"
                 value={prompt}
                 onChange={handlePromptChange}
                 rows={3}
@@ -214,9 +310,25 @@ export function AIGenerationPanel({ onImageGenerated }: AIGenerationPanelProps) 
               </div>
             </div>
 
+            {/* Textos rápidos para compor automaticamente */}
+            <div className="grid grid-cols-1 gap-3">
+              <div className="space-y-2">
+                <Label>Título (opcional)</Label>
+                <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex: Promoção imperdível" />
+              </div>
+              <div className="space-y-2">
+                <Label>Subtítulo (opcional)</Label>
+                <Input value={subtitle} onChange={(e) => setSubtitle(e.target.value)} placeholder="Ex: Somente hoje • Frete grátis" />
+              </div>
+              <div className="space-y-2">
+                <Label>Rodapé (opcional)</Label>
+                <Input value={footer} onChange={(e) => setFooter(e.target.value)} placeholder="Ex: @minhamarca" />
+              </div>
+            </div>
+
             <div className="flex gap-2">
               <Button 
-                onClick={generateImage} 
+                onClick={() => generateImage(false)} 
                 disabled={isGenerating || !prompt.trim()}
                 className="flex-1"
               >
@@ -242,6 +354,13 @@ export function AIGenerationPanel({ onImageGenerated }: AIGenerationPanelProps) 
                   <RefreshCw className="h-4 w-4" />
                 </Button>
               )}
+              <Button 
+                onClick={() => generateImage(true)} 
+                disabled={isGenerating || !prompt.trim()}
+                className="flex-1"
+              >
+                Gerar e Aplicar
+              </Button>
             </div>
           </TabsContent>
 
@@ -278,6 +397,14 @@ export function AIGenerationPanel({ onImageGenerated }: AIGenerationPanelProps) 
                   PNG, JPG, SVG até 10MB
                 </p>
               </div>
+              {referenceUrl && (
+                <div className="mt-3 text-left">
+                  <Label>Modelo selecionado</Label>
+                  <div className="mt-2 w-full aspect-square bg-muted rounded overflow-hidden">
+                    <img src={referenceUrl} alt="Modelo" className="w-full h-full object-cover" />
+                  </div>
+                </div>
+              )}
             </div>
           </TabsContent>
         </Tabs>

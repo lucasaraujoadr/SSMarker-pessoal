@@ -36,6 +36,13 @@ interface EditorState {
   // Zoom e pan
   zoom: number;
   pan: { x: number; y: number };
+  viewportLocked: boolean;
+  // Overlays e guias
+  showGrid: boolean;
+  showSafeAreas: boolean;
+  showGuides: boolean;
+  guides: { vertical?: number; horizontal?: number };
+  fitRequestId: number;
   
   // Histórico
   history: HistoryState;
@@ -96,6 +103,13 @@ interface EditorActions {
   setZoom: (zoom: number) => void;
   setPan: (pan: { x: number; y: number }) => void;
   resetView: () => void;
+  setViewportLocked: (locked: boolean) => void;
+  setShowGrid: (show: boolean) => void;
+  setShowSafeAreas: (show: boolean) => void;
+  setShowGuides: (show: boolean) => void;
+  setGuides: (guides: { vertical?: number; horizontal?: number }) => void;
+  clearGuides: () => void;
+  requestFitToScreen: () => void;
   
   // Histórico
   addHistoryAction: (action: Omit<HistoryAction, 'id' | 'timestamp'>) => void;
@@ -152,6 +166,12 @@ export const useEditorStore = create<EditorStore>()(
     isMoving: false,
     zoom: 1,
     pan: { x: 0, y: 0 },
+    viewportLocked: false,
+    showGrid: true,
+    showSafeAreas: false,
+    showGuides: true,
+    guides: {},
+    fitRequestId: 0,
     history: {
       actions: [],
       currentIndex: -1,
@@ -570,6 +590,48 @@ export const useEditorStore = create<EditorStore>()(
       set((state) => {
         state.zoom = 1;
         state.pan = { x: 0, y: 0 };
+      });
+    },
+
+    setViewportLocked: (locked) => {
+      set((state) => {
+        state.viewportLocked = locked;
+      });
+    },
+
+    setShowGrid: (show) => {
+      set((state) => {
+        state.showGrid = show;
+      });
+    },
+
+    setShowSafeAreas: (show) => {
+      set((state) => {
+        state.showSafeAreas = show;
+      });
+    },
+
+    setShowGuides: (show) => {
+      set((state) => {
+        state.showGuides = show;
+      });
+    },
+
+    setGuides: (guides) => {
+      set((state) => {
+        state.guides = guides;
+      });
+    },
+
+    clearGuides: () => {
+      set((state) => {
+        state.guides = {};
+      });
+    },
+
+    requestFitToScreen: () => {
+      set((state) => {
+        state.fitRequestId++;
       });
     },
 

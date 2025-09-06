@@ -3,6 +3,7 @@
 import { useRef, useEffect, useState } from 'react';
 import { Layer } from '@/types';
 import { Rect, Text, Image, Circle, Line, Group } from '@/lib/konva-wrapper';
+import { useEditorStore, useCurrentPage } from '@/store/editor-store';
 
 interface LayerRendererProps {
   layer: Layer;
@@ -20,6 +21,8 @@ export function LayerRenderer({
   onUnhover 
 }: LayerRendererProps) {
   const [imageElement, setImageElement] = useState<HTMLImageElement | null>(null);
+  const { updateLayer } = useEditorStore();
+  const currentPage = useCurrentPage();
 
   // Carregar imagem se for uma camada de imagem
   useEffect(() => {
@@ -44,6 +47,64 @@ export function LayerRenderer({
 
   const handleMouseLeave = () => {
     onUnhover();
+  };
+
+  const SNAP_DISTANCE = 8;
+  const GRID_SIZE = 16;
+
+  const snap = (value: number, targets: number[]) => {
+    for (const t of targets) {
+      if (Math.abs(value - t) <= SNAP_DISTANCE) return t;
+    }
+    return value;
+  };
+
+  const getSnappedPosition = (x: number, y: number, w: number, h: number) => {
+    if (!currentPage) return { x, y };
+    const pageW = currentPage.width;
+    const pageH = currentPage.height;
+
+    const targetsX: number[] = [0, pageW / 2 - w / 2, pageW - w];
+    const targetsY: number[] = [0, pageH / 2 - h / 2, pageH - h];
+    for (let gx = 0; gx <= pageW - w; gx += GRID_SIZE) targetsX.push(gx);
+    for (let gy = 0; gy <= pageH - h; gy += GRID_SIZE) targetsY.push(gy);
+
+    return { x: snap(x, targetsX), y: snap(y, targetsY) };
+  };
+
+  const onDragMove = (e: any) => {
+    const node = e.target;
+    const pos = node.position();
+    const size = { w: (layer as any).width, h: (layer as any).height };
+    const { x, y } = getSnappedPosition(pos.x, pos.y, size.w, size.h);
+    node.position({ x, y });
+    // Atualizar guias para o centro
+    if (currentPage) {
+      const centerX = x + size.w / 2;
+      const centerY = y + size.h / 2;
+      // Centralizado se encostou no centro da página
+      const showV = Math.abs(centerX - currentPage.width / 2) <= 8 ? currentPage.width / 2 : undefined;
+      const showH = Math.abs(centerY - currentPage.height / 2) <= 8 ? currentPage.height / 2 : undefined;
+      // Usar store via window to avoid circular import – simples placeholder
+      try {
+        // @ts-ignore
+        const { useEditorStore } = require('@/store/editor-store');
+        const setGuides = useEditorStore.getState().setGuides;
+        setGuides({ vertical: showV, horizontal: showH });
+      } catch {}
+    }
+  };
+
+  const onDragEnd = (e: any) => {
+    const node = e.target;
+    const pos = node.position();
+    updateLayer((layer as any).id, { x: pos.x, y: pos.y } as any);
+    try {
+      // @ts-ignore
+      const { useEditorStore } = require('@/store/editor-store');
+      const clearGuides = useEditorStore.getState().clearGuides;
+      clearGuides();
+    } catch {}
   };
 
   const renderLayer = () => {
@@ -84,6 +145,8 @@ export function LayerRenderer({
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
             draggable
+            onDragMove={onDragMove}
+            onDragEnd={onDragEnd}
           />
         );
       }
@@ -128,6 +191,8 @@ export function LayerRenderer({
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
             draggable
+            onDragMove={onDragMove}
+            onDragEnd={onDragEnd}
           />
         );
       }
@@ -151,6 +216,8 @@ export function LayerRenderer({
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
                 draggable
+                onDragMove={onDragMove}
+                onDragEnd={onDragEnd}
               />
             );
 
@@ -168,6 +235,8 @@ export function LayerRenderer({
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
                 draggable
+                onDragMove={onDragMove}
+                onDragEnd={onDragEnd}
               />
             );
 
@@ -182,6 +251,8 @@ export function LayerRenderer({
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
                 draggable
+                onDragMove={onDragMove}
+                onDragEnd={onDragEnd}
               />
             );
 
@@ -199,6 +270,8 @@ export function LayerRenderer({
                   onMouseEnter={handleMouseEnter}
                   onMouseLeave={handleMouseLeave}
                   draggable
+                  onDragMove={onDragMove}
+                  onDragEnd={onDragEnd}
                 />
               );
             }
@@ -234,6 +307,8 @@ export function LayerRenderer({
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
                 draggable
+                onDragMove={onDragMove}
+                onDragEnd={onDragEnd}
               />
             );
 
